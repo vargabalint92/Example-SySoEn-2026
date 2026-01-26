@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>User Data Collection</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;max-width:760px;margin:32px auto;padding:0 16px;color:#111}
+        form{display:grid;gap:12px}
+        label{display:flex;flex-direction:column;font-size:14px}
+        .row{display:flex;gap:12px}
+        .row label{flex:1}
+        .controls{display:flex;gap:8px}
+        .msg{padding:10px;border-radius:6px}
+        .msg.success{background:#e6ffed;border:1px solid #b6f0c8}
+        .msg.error{background:#ffecec;border:1px solid #f0b6b6}
+    </style>
+</head>
+<body>
+    <h1>Provide your details</h1>
+
+    <form id="userForm" autocomplete="on" novalidate>
+        <div class="row">
+            <label>First name
+                <input name="firstName" type="text" required maxlength="60" placeholder="First name">
+            </label>
+            <label>Last name
+                <input name="lastName" type="text" required maxlength="60" placeholder="Last name">
+            </label>
+        </div>
+
+        <label>Email
+            <input name="email" type="email" required placeholder="you@example.com">
+        </label>
+
+        <label>Phone
+            <input name="phone" type="tel" pattern="^\+?[0-9\s\-()]{7,20}$" placeholder="+1 555 555 5555">
+        </label>
+
+        <div class="row">
+            <label>Date of birth
+                <input name="dob" type="date">
+            </label>
+            <label>Gender
+                <select name="gender">
+                    <option value="">Prefer not to say</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="nonbinary">Non-binary</option>
+                    <option value="other">Other</option>
+                </select>
+            </label>
+        </div>
+
+        <label>Address
+            <textarea name="address" rows="3" placeholder="Street, City, State, ZIP"></textarea>
+        </label>
+
+        <fieldset>
+            <legend>Interests</legend>
+            <label><input name="interests" type="checkbox" value="news"> News & updates</label>
+            <label><input name="interests" type="checkbox" value="offers"> Special offers</label>
+            <label><input name="interests" type="checkbox" value="research"> Research participation</label>
+        </fieldset>
+
+        <label>
+            <input name="consent" type="checkbox" required> I consent to the storage of this data (required)
+        </label>
+
+        <div class="controls">
+            <button type="submit">Submit</button>
+            <button type="reset">Reset</button>
+        </div>
+
+        <div id="msg" class="msg" aria-live="polite" style="display:none"></div>
+    </form>
+
+    <script>
+        (function(){
+            const form = document.getElementById('userForm');
+            const msgEl = document.getElementById('msg');
+
+            function showMessage(text, type){
+                msgEl.textContent = text;
+                msgEl.className = 'msg ' + (type === 'success' ? 'success' : 'error');
+                msgEl.style.display = 'block';
+            }
+
+            function collect(formEl){
+                const fd = new FormData(formEl);
+                const interests = fd.getAll('interests');
+                return {
+                    firstName: fd.get('firstName') || '',
+                    lastName: fd.get('lastName') || '',
+                    email: fd.get('email') || '',
+                    phone: fd.get('phone') || '',
+                    dob: fd.get('dob') || '',
+                    gender: fd.get('gender') || '',
+                    address: fd.get('address') || '',
+                    interests,
+                    consent: !!fd.get('consent'),
+                    submittedAt: new Date().toISOString()
+                };
+            }
+
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+
+                // simple browser validation
+                if (!form.reportValidity) {
+                    // fallback: check required manually
+                }
+                if (!form.checkValidity()) {
+                    showMessage('Please correct the highlighted fields.', 'error');
+                    return;
+                }
+
+                const entry = collect(form);
+
+                // store locally (example). Replace with fetch() to send to a server.
+                try {
+                    const key = 'collectedUsers_v1';
+                    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                    existing.push(entry);
+                    localStorage.setItem(key, JSON.stringify(existing));
+                    showMessage('Data saved locally. Replace storage logic to send to your server.', 'success');
+                    form.reset();
+                } catch (err) {
+                    showMessage('Failed to save data: ' + (err.message || 'unknown error'), 'error');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
